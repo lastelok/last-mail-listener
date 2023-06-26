@@ -2,11 +2,11 @@
     "author": {
         "name": "LasT"
     },
-    "bundleDependencies": false,
+    "bundleDependencies": [],
     "dependencies": {
         "async": "^2.6.2",
         "imap": "^0.8.19",
-        "mailparser": "^2.7.7"
+        "mailparser": "^3.6.4"
     },
     "deprecated": false,
     "description": "Mail listener library for node.js. Get notification when new email arrived.",
@@ -29,5 +29,5 @@
         "type": "git",
         "url": "https://github.com/starker22/last-mail-listener"
     },
-    "version": "1.0.0"
+    "version": "1.1.1"
 }

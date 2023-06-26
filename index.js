@@ -1,7 +1,7 @@
 /**@module last-mail-listener
  * @author LasT
- * @version 1.0.0
- * @date 23 September 2022
+ * @version 1.1.0
+ * @date 26 January 2023
  */
 
 // Require statements
@@ -9,7 +9,6 @@ var Imap = require('imap')
 var EventEmitter = require('events').EventEmitter
 var simpleParser = require('mailparser').simpleParser
 var fs = require('fs')
-
 var async = require('async')
 
 class MailListener extends EventEmitter {
@@ -37,6 +36,7 @@ class MailListener extends EventEmitter {
             host: options.host,
             port: options.port,
             tls: options.tls,
+            autotls: options.autotls || null,
             tlsOptions: options.tlsOptions || {},
             connTimeout: options.connTimeout || null,
             authTimeout: options.authTimeout || null,
@@ -77,7 +77,9 @@ class MailListener extends EventEmitter {
     }
 
     imapError(error) {
-        this.emit('error', error)
+        if (error) {
+            this.emit('error', error)
+        }
     }
 
     imapMail() {
@@ -88,7 +90,7 @@ class MailListener extends EventEmitter {
         let self = this
         self.imap.search(self.searchFilter, (error, results) => {
             if (error) {
-                self.emit('error', err)
+                self.emit('error', error)
             } else if (results.length > 0) {
                 async.each(
                     results,
@@ -98,27 +100,35 @@ class MailListener extends EventEmitter {
                             markSeen: self.markSeen,
                         })
                         f.on('message', (msg, seqno) => {
+                            let attrs
+                            msg.on('attributes', (a) => {
+                                attrs = a
+                            })
                             msg.on('body', async (stream, info) => {
                                 let parsed = await simpleParser(stream)
-                                self.emit('mail', parsed, seqno)
-                                self.emit('headers', parsed.headers, seqno)
-                                self.emit('body', { html: parsed.html, text: parsed.text, textAsHtml: parsed.textAsHtml }, seqno)
+                                self.emit('mail', parsed, seqno, attrs)
+                                self.emit('headers', parsed.headers, seqno, attrs)
+                                self.emit('body', { html: parsed.html, text: parsed.text, textAsHtml: parsed.textAsHtml }, seqno, attrs)
                                 if (parsed.attachments.length > 0) {
                                     for (let att of parsed.attachments) {
                                         if (self.attachments) {
                                             await fs.writeFile(`${self.attachmentOptions.directory}${att.filename}`, att.content, (error) => {
-                                                self.emit('error', error)
+                                                if (error) {
+                                                    self.emit('error', error)
+                                                }
                                             })
-                                            self.emit('attachment', att, `${self.attachmentOptions.directory}${att.filename}`, seqno)
+                                            self.emit('attachment', att, `${self.attachmentOptions.directory}${att.filename}`, seqno, attrs)
                                         } else {
-                                            self.emit('attachment', att, null, seqno)
+                                            self.emit('attachment', att, null, seqno, attrs)
                                         }
                                     }
                                 }
                             })
                         })
                         f.once('error', (error) => {
-                            self.emit('error', error)
+                            if (error) {
+                                self.emit('error', error)
+                            }
                         })
                     },
                     (error) => {

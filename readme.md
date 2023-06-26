@@ -8,6 +8,15 @@ Install
 
 `npm install last-mail-listener`
 
+## Version Notes
+
+Change notes:
+
+-   v1.1.1:
+    -   Updated dependencies (Works now with NODEJS v18.16.0 LTS).
+
+NOTE: This version is designed to work with & tested on NodeJS v 18.16.0 LTS, the most recent LTS version as at June 2023. It might not work on older versions of Node.
+
 JavaScript Code:
 
 ```javascript
@@ -23,6 +32,7 @@ var mailListener = new MailListener({
   connTimeout: 10000, // Default by node-imap
   authTimeout: 5000, // Default by node-imap,
   debug: console.log, // Or your custom function with only one incoming argument. Default: null
+  autotls: 'never', // default by node-imap
   tlsOptions: { rejectUnauthorized: false },
   mailbox: "INBOX", // mailbox to monitor
   searchFilter: ["ALL"], // the search filter being used after an IDLE notification has been retrieved
@@ -75,13 +85,6 @@ mailListener.imap.move(:msguids, :mailboxes, function(){})
 ```
 
 That's easy!
-
-## Attachments
-
-Attachments in this version are buffered. This feature is based on how [mailparser](https://github.com/andris9/mailparser#attachments)'s simpleParser function handles attachments.
-Setting `attachments: true` will download attachments as buffer objects by default to the project directory.
-A specific download directory may be specified by setting `attachmentOptions: { directory: "attachments/"}`.
-The `"attachment"` event will be fired every time an attachment is encountered.
 
 ## Testing
 
